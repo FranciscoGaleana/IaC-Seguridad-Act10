@@ -1,0 +1,89 @@
+- name: Set up IIS in Windows
+  hosts: Windows
+  become: yes
+  tasks:
+
+    - name: Install IIS role
+      win_feature: 
+        name: Web-Server
+        state: present
+    
+    - name: Install additional IIS components (if necessary)
+      win_feature:
+        name:
+          - Web-Common-Http
+          - Web-Default-Doc
+          - Web-Dir-Browsing
+          - Web-Http-Errors
+          - Web-Static-Content
+          - Web-Http-Redirect
+          - Web-Health
+          - Web-Http-Logging
+          - Web-Performance
+          - Web-Stat-Compression
+        state: present
+      
+    - name: Ensure that IIS is initialized
+      win_service:
+        name: W3SVC
+        start_mode: auto
+        state: started
+    
+    - name: Ensure port 80 is allowed in the firewall
+      win_firewall_rule:
+        name: "Open port 80 for HTTP"
+        enable: yes
+        localport: 80
+        action: allow
+        direction: in
+        protocol: TCP
+      
+    - name: Set necessary privileges in the IIS directory
+      win_acl:
+        path: 'C:\inetpub\wwwroot'
+        user: 'IIS_IUSRS'
+        rights: 'FullControl'
+        type: allow
+
+    - name: Create a landing page
+      win_copy:
+        content: |
+          <html lang="es">
+          <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>IIS</title>
+              <style>
+                  body {
+                      display: flex;
+                      flex-direction: column;
+                      justify-content: center;
+                      align-items: center;
+                      margin: 0;
+                      font-family: Arial, sans-serif;
+                  }
+                  pre {
+                      font-size: 30px;
+                      margin: 0 20px;
+                  }
+              </style>
+          </head>
+          <body>
+              <h1>¡IIS instalado correctamente!</h1>
+              <div class="pingüino-container">
+                  <pre>
+                    .--.
+                   |o_o |
+                   |:_/ |
+                  //   \ \
+                 (|     | )
+                /'\_   _/`\
+                \___)=(___/
+                  </pre>
+              </div>
+                    </body>
+                    </html>
+        dest: C:\inetpub\wwwroot\index.html
+
+    - name: Restart IIS to apply all changes made
+      win_shell: iisreset

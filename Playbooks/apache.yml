@@ -1,0 +1,73 @@
+- name: Install Apache in Ubuntu
+  hosts: Ubuntu
+  become: yes
+  tasks:
+      #Actualizar cache de repositorios apt
+    - name: Update packages
+      ansible.builtin.apt:
+        update_cache: yes
+
+      #Instalar Apache
+    - name: Install Apache
+      ansible.builtin.apt:
+        name: apache2
+        state: present
+
+      #Habilitar apache y asegurarse de que este corriendo
+    - name: Enable and ensure Apache is running
+      ansible.builtin.systemd:
+        name: apache2
+        enabled: yes
+        state: started
+
+      #Abrir puerto 80
+    - name: Open port 80 in the firewall
+      ansible.builtin.ufw:
+        rule: allow
+        port: '80'
+        proto: tcp
+
+      #Crear una página html de bienvenida
+    - name: Create a landing page
+      copy:
+        content: |
+          <html lang="es">
+          <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>Apache</title>
+              <style>
+                  body {
+                      display: flex;
+                      flex-direction: column;
+                      justify-content: center;
+                      align-items: center;
+                      margin: 0;
+                      font-family: Arial, sans-serif;
+                      height: 75vh;
+                  }
+                  pre {
+                      font-size: 30px;
+                      margin: 0 20px;
+                  }
+              </style>
+          </head>
+          <body>
+              <h1>¡Apache instalado exitosamente!</h1>
+              <div class="pingüino-container">
+                  <pre>
+                    .--.
+                   |o_o |
+                   |:_/ |
+                  //   \ \
+                 (|     | )
+                /'\_   _/`\
+                \___)=(___/
+                  </pre>
+              </div>
+                    </body>
+                    </html>
+        dest: /var/www/html/index.html
+        owner: www-data
+        group: www-data
+        mode: '0644'
